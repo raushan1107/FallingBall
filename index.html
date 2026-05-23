@@ -3,320 +3,313 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-<title>Falling Ball · Raushan Ranjan</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<title>Falling Ball · Raushan's</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-/* ── RESET & BASE ── */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;background:#060914;color:#fff;font-family:'Inter',sans-serif}
 
-/* ── ANIMATED BACKGROUND ── */
 body{
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99,102,241,0.15) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(236,72,153,0.1) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 50% at 50% -10%,rgba(99,102,241,.18) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 110%,rgba(236,72,153,.12) 0%,transparent 55%),
     #060914;
-  position:relative;
 }
 
-/* stars */
+/* ── STARS ── */
 #stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--d) ease-in-out infinite alternate}
-@keyframes twinkle{0%{opacity:var(--o1)}100%{opacity:var(--o2);transform:scale(1.4)}}
+@keyframes twinkle{0%{opacity:var(--o1)}100%{opacity:var(--o2);transform:scale(1.5)}}
 
-/* ── PAGE LAYOUT ── */
-#page{
-  position:relative;z-index:1;
-  height:100vh;display:flex;flex-direction:column;
-  align-items:center;justify-content:flex-start;
-  padding:0;
-}
+/* ── LAYOUT ── */
+#page{position:relative;z-index:1;height:100vh;display:flex;flex-direction:column;align-items:center}
 
 /* ── TOP BAR ── */
 #topbar{
   width:100%;display:flex;align-items:center;justify-content:space-between;
   padding:10px 16px;
-  background:rgba(6,9,20,0.7);
+  background:rgba(6,9,20,.8);
   backdrop-filter:blur(12px);
-  border-bottom:1px solid rgba(99,102,241,0.2);
-  flex-shrink:0;
+  border-bottom:1px solid rgba(99,102,241,.2);
+  flex-shrink:0;z-index:10;
 }
-.tb-brand{display:flex;flex-direction:column}
-.tb-name{
-  font-family:'Orbitron',monospace;font-size:12px;font-weight:700;
+.tb-brand .tb-name{
+  font-family:'Orbitron',monospace;font-size:13px;font-weight:700;
   background:linear-gradient(90deg,#818cf8,#c084fc);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  letter-spacing:.06em;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.06em;
 }
-.tb-sub{font-size:9px;color:#475569;letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
-.tb-stats{display:flex;gap:12px;align-items:center}
+.tb-brand .tb-sub{font-size:9px;color:#475569;letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+.tb-right{display:flex;gap:8px;align-items:center}
 .stat-box{
-  text-align:center;
-  background:rgba(99,102,241,0.08);
-  border:1px solid rgba(99,102,241,0.15);
-  border-radius:8px;padding:4px 10px;
+  text-align:center;background:rgba(99,102,241,.08);
+  border:1px solid rgba(99,102,241,.18);border-radius:8px;padding:4px 10px;
 }
-.stat-box .sv{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:#818cf8}
+.stat-box .sv{font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:#818cf8;transition:color .2s}
+.stat-box .sv.gold{color:#fbbf24}
 .stat-box .sl{font-size:8px;color:#475569;letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+/* restart / quit buttons in topbar */
+.tb-btn{
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.18);
+  border-radius:8px;padding:5px 10px;cursor:pointer;
+  font-size:11px;font-weight:600;color:#818cf8;transition:all .18s;
+  font-family:'Inter',sans-serif;
+}
+.tb-btn:hover{background:rgba(99,102,241,.18);border-color:rgba(99,102,241,.5)}
+.tb-btn.quit{color:#f87171;border-color:rgba(248,113,113,.2);background:rgba(248,113,113,.06)}
+.tb-btn.quit:hover{background:rgba(248,113,113,.15);border-color:rgba(248,113,113,.5)}
+.tb-btn span{font-size:13px}
+/* hide during idle */
+.tb-btn.hidden{display:none}
 
-/* ── GAME AREA WRAPPER ── */
+/* ── ARENA ── */
 #arena{
   flex:1;display:flex;align-items:center;justify-content:center;
   gap:14px;padding:10px 12px;min-height:0;width:100%;
 }
 
-/* ── GAME CANVAS ── */
+/* ── GAME ── */
 #game{
-  position:relative;
-  width:300px;height:480px;
-  flex-shrink:0;
-  background:
-    linear-gradient(180deg,rgba(6,9,20,0.97) 0%,rgba(10,14,30,0.95) 100%);
-  border-radius:16px;
-  overflow:hidden;
-  border:1px solid rgba(99,102,241,0.25);
-  box-shadow:
-    0 0 0 1px rgba(99,102,241,0.08),
-    0 0 40px rgba(99,102,241,0.08),
-    0 20px 60px rgba(0,0,0,0.6),
-    inset 0 1px 0 rgba(255,255,255,0.04);
+  position:relative;width:300px;height:480px;flex-shrink:0;
+  background:linear-gradient(180deg,rgba(6,9,20,.97) 0%,rgba(10,14,30,.95) 100%);
+  border-radius:16px;overflow:hidden;
+  border:1px solid rgba(99,102,241,.25);
+  box-shadow:0 0 0 1px rgba(99,102,241,.06),0 0 40px rgba(99,102,241,.08),0 20px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);
 }
-
-/* grid inside game */
 #game::after{
   content:'';position:absolute;inset:0;pointer-events:none;
-  background-image:
-    linear-gradient(rgba(99,102,241,0.04) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(99,102,241,0.04) 1px,transparent 1px);
-  background-size:30px 30px;
-  border-radius:16px;
+  background-image:linear-gradient(rgba(99,102,241,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.03) 1px,transparent 1px);
+  background-size:30px 30px;border-radius:16px;z-index:0;
 }
 
 /* ── BALL ── */
 #ball{
-  position:absolute;
-  width:20px;height:20px;
-  border-radius:50%;
-  background:radial-gradient(circle at 38% 35%, #f9a8d4, #ec4899 55%, #be185d);
-  box-shadow:0 0 10px rgba(236,72,153,0.7),0 0 24px rgba(236,72,153,0.3);
-  z-index:20;
-  transition:box-shadow 0.1s;
+  position:absolute;width:20px;height:20px;border-radius:50%;
+  background:radial-gradient(circle at 38% 35%,#f9a8d4,#ec4899 55%,#be185d);
+  box-shadow:0 0 10px rgba(236,72,153,.7),0 0 24px rgba(236,72,153,.3);
+  z-index:20;transition:box-shadow .1s;
 }
 
-/* ── WALLS (blocks) ── */
+/* ── WALLS ── */
 .wall{
-  position:absolute;
-  height:20px;
-  background:linear-gradient(90deg,
-    rgba(30,27,75,0.5) 0%,
-    rgba(49,46,129,0.9) 10%,
-    rgba(55,48,163,0.95) 50%,
-    rgba(49,46,129,0.9) 90%,
-    rgba(30,27,75,0.5) 100%
-  );
-  border-top:1px solid rgba(129,140,248,0.3);
-  border-bottom:1px solid rgba(99,102,241,0.15);
-  box-shadow:0 0 12px rgba(99,102,241,0.15);
-  z-index:10;
-  /* segments drawn by JS: left-seg, gap-seg (transparent), right-seg */
+  position:absolute;height:20px;z-index:10;
+  background:linear-gradient(90deg,rgba(30,27,75,.4) 0%,rgba(49,46,129,.95) 10%,rgba(55,48,163,.95) 50%,rgba(49,46,129,.95) 90%,rgba(30,27,75,.4) 100%);
+  border-top:1px solid rgba(129,140,248,.3);
+  border-bottom:1px solid rgba(99,102,241,.15);
+  box-shadow:0 0 10px rgba(99,102,241,.12);
 }
-.wall-seg{
-  position:absolute;height:100%;top:0;
-  background:inherit;
-}
-.wall-seg.gap{
-  background:transparent;
-  border:none;box-shadow:none;
-}
-/* the hole glow */
+.wall-seg{position:absolute;height:100%;top:0;background:inherit}
 .wall-hole{
   position:absolute;height:100%;top:0;
-  background:linear-gradient(180deg,rgba(129,140,248,0.12),rgba(129,140,248,0.03));
-  border-left:1px solid rgba(129,140,248,0.4);
-  border-right:1px solid rgba(129,140,248,0.4);
-  box-shadow:inset 0 0 8px rgba(129,140,248,0.1), 0 0 6px rgba(129,140,248,0.15);
+  background:linear-gradient(180deg,rgba(129,140,248,.1),rgba(129,140,248,.02));
+  border-left:1px solid rgba(129,140,248,.45);
+  border-right:1px solid rgba(129,140,248,.45);
+  box-shadow:inset 0 0 8px rgba(129,140,248,.08),0 0 8px rgba(129,140,248,.12);
 }
 
-/* ── OVERLAY ── */
-#overlay{
+/* ── OVERLAYS ── */
+.ov{
   position:absolute;inset:0;z-index:100;
-  background:rgba(6,9,20,0.92);
+  background:rgba(6,9,20,.93);
   backdrop-filter:blur(6px);
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  gap:16px;
-  border-radius:16px;
-  padding:20px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;border-radius:16px;padding:20px;
+  transition:opacity .3s;
 }
-#overlay.hide{display:none}
-
-.ov-badge{
-  font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;
-  color:#818cf8;background:rgba(99,102,241,0.1);
-  border:1px solid rgba(99,102,241,0.25);
-  padding:4px 12px;border-radius:20px;
-}
+.ov.hide{display:none}
+.ov-badge{font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#818cf8;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);padding:4px 12px;border-radius:20px}
 .ov-title{
-  font-family:'Orbitron',monospace;
-  font-size:clamp(22px,6vw,30px);font-weight:900;
-  text-align:center;line-height:1.15;
+  font-family:'Orbitron',monospace;font-size:clamp(22px,6vw,30px);font-weight:900;
+  text-align:center;line-height:1.2;
   background:linear-gradient(135deg,#818cf8 0%,#c084fc 50%,#ec4899 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
 }
-.ov-score-big{
-  font-family:'Orbitron',monospace;font-size:52px;font-weight:900;
-  color:#818cf8;line-height:1;
-  text-shadow:0 0 30px rgba(129,140,248,0.5);
-  display:none;
-}
-.ov-score-label{font-size:11px;color:#475569;letter-spacing:.12em;display:none;margin-top:-10px}
-.ov-newbest{
-  font-size:12px;font-weight:700;color:#fbbf24;
-  background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);
-  padding:4px 12px;border-radius:20px;display:none;
-}
-.ov-hint{
-  font-size:12px;color:#475569;text-align:center;line-height:1.7;
-  border:1px solid rgba(99,102,241,0.12);
-  background:rgba(99,102,241,0.04);
-  border-radius:10px;padding:10px 14px;max-width:240px;
-}
-.ov-hint b{color:#818cf8}
+.ov-score-big{font-family:'Orbitron',monospace;font-size:56px;font-weight:900;color:#818cf8;line-height:1;text-shadow:0 0 30px rgba(129,140,248,.5)}
+.ov-lbl{font-size:10px;color:#475569;letter-spacing:.14em;text-transform:uppercase;margin-top:-8px}
+.ov-newbest{font-size:12px;font-weight:700;color:#fbbf24;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);padding:4px 12px;border-radius:20px}
 .ov-desc{font-size:13px;color:#94a3b8;text-align:center;max-width:240px;line-height:1.6}
+.ov-hint{font-size:11px;color:#475569;text-align:center;max-width:240px;line-height:1.7;border:1px solid rgba(99,102,241,.12);background:rgba(99,102,241,.04);border-radius:10px;padding:10px 14px}
+.ov-hint b{color:#818cf8}
 
-#playBtn{
+/* ── BUTTONS ── */
+.btn-play{
   background:linear-gradient(135deg,#6366f1,#8b5cf6);
-  border:none;color:#fff;
-  font-family:'Orbitron',monospace;
-  font-size:13px;font-weight:700;
-  padding:13px 36px;border-radius:10px;
-  cursor:pointer;letter-spacing:.08em;
-  box-shadow:0 4px 24px rgba(99,102,241,0.4),0 1px 0 rgba(255,255,255,0.1) inset;
-  transition:transform .15s,box-shadow .15s,opacity .15s;
+  border:none;color:#fff;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;
+  padding:13px 36px;border-radius:10px;cursor:pointer;letter-spacing:.08em;
+  box-shadow:0 4px 24px rgba(99,102,241,.4),inset 0 1px 0 rgba(255,255,255,.1);
+  transition:transform .15s,box-shadow .15s,opacity .15s;width:100%;max-width:220px;
   position:relative;overflow:hidden;
 }
-#playBtn::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent);
-  border-radius:inherit;
-}
-#playBtn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(99,102,241,0.5)}
-#playBtn:active{transform:translateY(0);opacity:.88}
+.btn-play::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.14),transparent);border-radius:inherit}
+.btn-play:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(99,102,241,.5)}
+.btn-play:active{transform:translateY(0);opacity:.88}
 
-/* ── SIDE PANEL (desktop) ── */
-#panel{
-  display:flex;flex-direction:column;gap:10px;
-  width:160px;flex-shrink:0;
+/* ── GAME OVER OVERLAY ── */
+#goOverlay{
+  position:absolute;inset:0;z-index:200;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;border-radius:16px;padding:20px;
+  background:rgba(6,9,20,.95);
+  backdrop-filter:blur(8px);
+  opacity:0;pointer-events:none;
+  transition:opacity .4s;
 }
-.pc{
-  background:rgba(15,18,35,0.8);
-  border:1px solid rgba(99,102,241,0.15);
-  border-radius:12px;padding:12px;
-  backdrop-filter:blur(4px);
+#goOverlay.show{opacity:1;pointer-events:all}
+
+.go-score-ring{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  width:120px;height:120px;flex-shrink:0;
 }
+.go-score-ring svg{position:absolute;top:0;left:0;transform:rotate(-90deg)}
+.go-score-ring .ring-bg{fill:none;stroke:rgba(99,102,241,.12);stroke-width:6}
+.go-score-ring .ring-fill{
+  fill:none;stroke:url(#ringGrad);stroke-width:6;stroke-linecap:round;
+  stroke-dasharray:339;stroke-dashoffset:339;
+  transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);
+}
+.go-score-num{
+  font-family:'Orbitron',monospace;font-size:34px;font-weight:900;
+  color:#818cf8;text-shadow:0 0 20px rgba(129,140,248,.5);
+  z-index:1;line-height:1;
+}
+.go-score-lbl{font-size:9px;color:#475569;letter-spacing:.15em;z-index:1;margin-top:2px}
+
+.go-title{
+  font-family:'Orbitron',monospace;font-size:22px;font-weight:900;
+  background:linear-gradient(135deg,#818cf8,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  text-align:center;
+}
+.go-newbest{font-size:12px;font-weight:700;color:#fbbf24;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);padding:4px 14px;border-radius:20px;display:none}
+.go-msg{font-size:13px;color:#64748b;text-align:center;max-width:230px;line-height:1.5}
+
+.go-btns{display:flex;flex-direction:column;gap:8px;width:100%;max-width:240px}
+.go-btn{
+  width:100%;padding:12px 0;border-radius:10px;
+  font-family:'Inter',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .18s;border:none;letter-spacing:.02em;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.go-btn.primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;box-shadow:0 4px 20px rgba(99,102,241,.35)}
+.go-btn.primary:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(99,102,241,.45)}
+.go-btn.secondary{background:rgba(99,102,241,.08);color:#818cf8;border:1px solid rgba(99,102,241,.25)}
+.go-btn.secondary:hover{background:rgba(99,102,241,.18);border-color:rgba(99,102,241,.5)}
+.go-btn.danger{background:rgba(248,113,113,.06);color:#f87171;border:1px solid rgba(248,113,113,.2)}
+.go-btn.danger:hover{background:rgba(248,113,113,.14);border-color:rgba(248,113,113,.5)}
+.go-btn.share{background:linear-gradient(135deg,#059669,#10b981);color:#fff;box-shadow:0 4px 16px rgba(16,185,129,.25)}
+.go-btn.share:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(16,185,129,.4)}
+
+/* share toast */
+#shareToast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);
+  background:#10b981;color:#fff;
+  font-size:13px;font-weight:700;
+  padding:10px 20px;border-radius:10px;
+  opacity:0;pointer-events:none;z-index:1000;
+  transition:all .3s;box-shadow:0 4px 20px rgba(16,185,129,.4);
+  white-space:nowrap;
+}
+#shareToast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── SIDE PANEL ── */
+#panel{display:flex;flex-direction:column;gap:10px;width:160px;flex-shrink:0}
+.pc{background:rgba(15,18,35,.85);border:1px solid rgba(99,102,241,.15);border-radius:12px;padding:12px;backdrop-filter:blur(4px)}
 .pc-lbl{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#475569;margin-bottom:6px}
 .pc-val{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:#818cf8}
 .pc-val.g{color:#34d399}
-.lv-bar{height:4px;background:rgba(99,102,241,0.15);border-radius:2px;margin-top:8px;overflow:hidden}
+.lv-bar{height:4px;background:rgba(99,102,241,.12);border-radius:2px;margin-top:8px;overflow:hidden}
 .lv-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#6366f1,#c084fc);transition:width .4s}
-
-.howto{font-size:11px;color:#64748b;line-height:1.75}
+.howto{font-size:11px;color:#64748b;line-height:1.8}
 .howto span{color:#818cf8;font-weight:600}
-
-.cta-section-lbl{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#334155;padding:0 2px}
+.cta-lbl{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#334155;padding:0 2px}
 .cta-links{display:flex;flex-direction:column;gap:6px}
-.cta-a{
-  display:flex;align-items:center;gap:8px;
-  background:rgba(15,18,35,0.8);
-  border:1px solid rgba(99,102,241,0.12);
-  border-radius:9px;padding:8px 10px;
-  text-decoration:none;color:#94a3b8;
-  font-size:11px;font-weight:600;
-  transition:all .18s;
-}
-.cta-a:hover{border-color:rgba(99,102,241,0.4);color:#c7d2fe;background:rgba(99,102,241,0.08);transform:translateX(2px)}
+.cta-a{display:flex;align-items:center;gap:8px;background:rgba(15,18,35,.8);border:1px solid rgba(99,102,241,.12);border-radius:9px;padding:8px 10px;text-decoration:none;color:#94a3b8;font-size:11px;font-weight:600;transition:all .18s}
+.cta-a:hover{border-color:rgba(99,102,241,.4);color:#c7d2fe;background:rgba(99,102,241,.08);transform:translateX(2px)}
 .cta-a .em{font-size:13px}
 .cta-a .info .t{font-size:11px;font-weight:700;color:#c7d2fe}
 .cta-a .info .d{font-size:9px;color:#475569}
 
 /* ── MOBILE CONTROLS ── */
-#mctrl{
-  display:none;
-  width:300px;flex-shrink:0;
-  gap:10px;padding:8px 0 4px;
-}
+#mctrl{display:none;width:300px;flex-shrink:0;gap:10px;padding:8px 0 2px}
 .mb{
-  flex:1;height:56px;
-  background:rgba(15,18,35,0.9);
-  border:1px solid rgba(99,102,241,0.2);
-  border-radius:12px;
+  flex:1;height:54px;background:rgba(15,18,35,.9);
+  border:1px solid rgba(99,102,241,.2);border-radius:12px;
   display:flex;align-items:center;justify-content:center;
-  font-size:24px;cursor:pointer;
-  transition:all .12s;
-  touch-action:none;
-  box-shadow:0 4px 14px rgba(0,0,0,0.4);
+  font-size:22px;cursor:pointer;transition:all .12s;touch-action:none;
+  box-shadow:0 4px 14px rgba(0,0,0,.4);user-select:none;
 }
-.mb:active,.mb.on{
-  background:rgba(99,102,241,0.18);
-  border-color:rgba(99,102,241,0.5);
-  box-shadow:0 0 16px rgba(99,102,241,0.2);
-  transform:scale(0.95);
+.mb:active,.mb.on{background:rgba(99,102,241,.18);border-color:rgba(99,102,241,.55);transform:scale(.95);box-shadow:0 0 18px rgba(99,102,241,.2)}
+
+/* ── MOBILE BOTTOM SHEET (CTA) ── */
+#mobileSheet{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;z-index:50;
+  background:rgba(10,12,25,.97);
+  border-top:1px solid rgba(99,102,241,.2);
+  border-radius:16px 16px 0 0;
+  padding:10px 14px 14px;
+  backdrop-filter:blur(16px);
+  transform:translateY(100%);
+  transition:transform .35s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 -8px 40px rgba(0,0,0,.5);
 }
+#mobileSheet.open{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;background:rgba(99,102,241,.3);border-radius:2px;margin:0 auto 10px}
+.sheet-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.sheet-link{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.15);
+  border-radius:10px;padding:9px 11px;
+  text-decoration:none;color:#94a3b8;font-size:12px;font-weight:600;
+  transition:all .18s;
+}
+.sheet-link:hover,.sheet-link:active{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.45);color:#c7d2fe}
+.sheet-link .sem{font-size:16px}
+.sheet-link .si .st{font-size:12px;font-weight:700;color:#c7d2fe}
+.sheet-link .si .sd{font-size:9px;color:#475569}
+.sheet-brand{font-size:10px;color:#334155;text-align:center;margin-top:6px}
+.sheet-brand b{color:#6366f1}
 
 /* ── FOOTER ── */
 #foot{
-  width:100%;padding:6px 16px;
-  border-top:1px solid rgba(99,102,241,0.1);
-  background:rgba(6,9,20,0.8);
+  width:100%;padding:5px 16px;
+  border-top:1px solid rgba(99,102,241,.1);
+  background:rgba(6,9,20,.85);
   display:flex;align-items:center;justify-content:space-between;
-  font-size:10px;color:#334155;flex-shrink:0;
+  font-size:10px;color:#334155;flex-shrink:0;z-index:10;
 }
 #foot b{color:#6366f1}
 .flinks{display:flex;gap:12px}
-.flinks a{color:#334155;text-decoration:none;transition:color .2s}
+.flinks a{color:#334155;text-decoration:none;transition:color .18s}
 .flinks a:hover{color:#818cf8}
 
 /* ── PARTICLES ── */
-.pt{
-  position:absolute;width:5px;height:5px;border-radius:50%;
-  pointer-events:none;z-index:50;
-  animation:ptfall 0.7s ease-out forwards;
-}
-@keyframes ptfall{
-  0%{transform:translate(0,0) scale(1);opacity:1}
-  100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}
-}
-
-/* ── SCORE POP ── */
-.score-pop{
-  position:absolute;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;
-  color:#818cf8;pointer-events:none;z-index:60;
-  animation:scorerise 0.7s ease forwards;
-}
-@keyframes scorerise{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-36px);opacity:0}}
+.pt{position:absolute;border-radius:50%;pointer-events:none;z-index:50;animation:ptf .7s ease-out forwards}
+@keyframes ptf{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+.score-pop{position:absolute;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:#818cf8;pointer-events:none;z-index:60;animation:spr .7s ease forwards}
+@keyframes spr{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-38px);opacity:0}}
 
 /* ── DANGER FLASH ── */
-@keyframes danger{0%,100%{box-shadow:0 0 0 0 rgba(236,72,153,0)}50%{box-shadow:0 0 0 6px rgba(236,72,153,0.25),0 0 40px rgba(236,72,153,0.15) inset}}
-#game.danger{animation:danger 0.3s ease}
+@keyframes dflash{0%,100%{box-shadow:0 0 0 0 rgba(236,72,153,0)}50%{box-shadow:0 0 0 8px rgba(236,72,153,.2),inset 0 0 30px rgba(236,72,153,.1)}}
+#game.danger{animation:dflash .35s ease}
 
 /* ── RESPONSIVE ── */
 @media(max-width:600px){
   #panel{display:none}
   #mctrl{display:flex}
+  #mobileSheet{display:block}
   #arena{padding:6px 8px 0;flex-direction:column;justify-content:flex-start;gap:6px}
-  #game{
-    width:calc(100vw - 16px);
-    max-width:400px;
-    height:calc(100vh - 160px);
-    min-height:300px;
-  }
+  #game{width:calc(100vw - 16px);max-width:400px;height:calc(100vh - 200px);min-height:280px}
   #mctrl{width:calc(100vw - 16px);max-width:400px}
+  #foot .flinks{display:none}
+}
+@media(min-width:601px){
+  .tb-btn.mobile-only{display:none}
 }
 </style>
 </head>
 <body>
 
-<!-- STARS -->
 <div id="stars"></div>
 
 <div id="page">
@@ -327,31 +320,65 @@ body{
       <div class="tb-name">Raushan's</div>
       <div class="tb-sub">Falling Ball</div>
     </div>
-    <div class="tb-stats">
+    <div class="tb-right">
       <div class="stat-box"><div class="sv" id="tbScore">0</div><div class="sl">Score</div></div>
-      <div class="stat-box"><div class="sv" id="tbBest" style="color:#fbbf24">0</div><div class="sl">Best</div></div>
+      <div class="stat-box"><div class="sv gold" id="tbBest">0</div><div class="sl">Best</div></div>
+      <button class="tb-btn hidden" id="btnRestart" onclick="startGame()"><span>↺</span> Restart</button>
+      <button class="tb-btn quit hidden" id="btnQuit" onclick="quitGame()"><span>✕</span> Quit</button>
+      <!-- mobile: more button -->
+      <button class="tb-btn mobile-only" id="btnMore" onclick="toggleSheet()"><span>☰</span> More</button>
     </div>
   </div>
 
   <!-- ARENA -->
   <div id="arena">
 
-    <!-- GAME -->
     <div id="game">
       <div id="ball"></div>
-      <div id="overlay">
-        <div class="ov-badge">RR Skillverse Game</div>
-        <div class="ov-title" id="ovTitle">Falling<br>Ball</div>
-        <div class="ov-score-big" id="ovBig"></div>
-        <div class="ov-score-label" id="ovLbl">SCORE</div>
-        <div class="ov-newbest" id="ovNB">🏆 New Record!</div>
-        <div class="ov-desc" id="ovDesc">Guide the ball through the gaps in each wall.<br>Don't let it reach the top!</div>
-        <button id="playBtn">▶ &nbsp;PLAY</button>
-        <div class="ov-hint" id="ovHint">
-          <b>Keyboard:</b> ← → Arrow keys<br>
-          <b>Mobile:</b> Tap ◀ ▶ buttons below
+
+      <!-- START OVERLAY -->
+      <div class="ov" id="startOv">
+        <div class="ov-badge">Raushan's</div>
+        <div class="ov-title">Falling<br>Ball</div>
+        <div class="ov-desc">Guide the ball through the gaps. Don't let it reach the top!</div>
+        <button class="btn-play" onclick="startGame()">▶ &nbsp;PLAY</button>
+        <div class="ov-hint"><b>Keyboard:</b> ← → Arrow keys<br><b>Mobile:</b> Tap ◀ ▶ or swipe</div>
+      </div>
+
+      <!-- GAME OVER OVERLAY -->
+      <div id="goOverlay">
+        <svg width="0" height="0" style="position:absolute">
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#818cf8"/>
+              <stop offset="100%" stop-color="#ec4899"/>
+            </linearGradient>
+          </defs>
+        </svg>
+
+        <div class="go-score-ring">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle class="ring-bg" cx="60" cy="60" r="54"/>
+            <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="54"/>
+          </svg>
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <div class="go-score-num" id="goScoreNum">0</div>
+            <div class="go-score-lbl">SCORE</div>
+          </div>
+        </div>
+
+        <div class="go-title" id="goTitle">Game Over</div>
+        <div class="go-newbest" id="goNewBest">🏆 New Record!</div>
+        <div class="go-msg" id="goMsg">Keep practicing — you'll crush it!</div>
+
+        <div class="go-btns">
+          <button class="go-btn primary" onclick="startGame()">↺ &nbsp;Play Again</button>
+          <button class="go-btn share" id="shareBtn" onclick="shareScore()">📤 &nbsp;Share Score</button>
+          <button class="go-btn secondary" onclick="showStart()">🏠 &nbsp;Main Menu</button>
+          <button class="go-btn danger" onclick="quitGame()">✕ &nbsp;Quit Game</button>
         </div>
       </div>
+
     </div>
 
     <!-- MOBILE CONTROLS -->
@@ -360,16 +387,10 @@ body{
       <div class="mb" id="btnR">▶</div>
     </div>
 
-    <!-- SIDE PANEL -->
+    <!-- SIDE PANEL (desktop) -->
     <div id="panel">
-      <div class="pc">
-        <div class="pc-lbl">Score</div>
-        <div class="pc-val" id="pScore">0</div>
-      </div>
-      <div class="pc">
-        <div class="pc-lbl">Best</div>
-        <div class="pc-val g" id="pBest">0</div>
-      </div>
+      <div class="pc"><div class="pc-lbl">Score</div><div class="pc-val" id="pScore">0</div></div>
+      <div class="pc"><div class="pc-lbl">Best</div><div class="pc-val g" id="pBest">0</div></div>
       <div class="pc">
         <div class="pc-lbl">Level</div>
         <div class="pc-val" id="pLevel">1</div>
@@ -377,27 +398,14 @@ body{
       </div>
       <div class="pc">
         <div class="pc-lbl">How to Play</div>
-        <div class="howto">
-          <span>← →</span> Move ball<br>
-          Pass through <span>blue gaps</span><br>
-          Ball floats up if blocked<br>
-          Speed ↑ every 10 pts
-        </div>
+        <div class="howto"><span>← →</span> Move ball<br>Pass through <span>blue gaps</span><br>Avoid solid walls<br>Speed ↑ every 10 pts</div>
       </div>
-      <div class="cta-section-lbl">More from Raushan</div>
+      <div class="cta-lbl">More from Raushan</div>
       <div class="cta-links">
-        <a class="cta-a" href="https://rrskillverse.in" target="_blank">
-          <span class="em">🚀</span><div class="info"><div class="t">RR Skillverse</div><div class="d">Courses & Training</div></div>
-        </a>
-        <a class="cta-a" href="#" target="_blank">
-          <span class="em">💰</span><div class="info"><div class="t">FinMan AI</div><div class="d">Finance Intelligence</div></div>
-        </a>
-        <a class="cta-a" href="#" target="_blank">
-          <span class="em">🤖</span><div class="info"><div class="t">BUDDY AI</div><div class="d">Personal AI Agent</div></div>
-        </a>
-        <a class="cta-a" href="https://rrskillverse.in/blog" target="_blank">
-          <span class="em">✍️</span><div class="info"><div class="t">Tech Blog</div><div class="d">Azure · AI · .NET</div></div>
-        </a>
+        <a class="cta-a" href="https://rrskillverse.in" target="_blank"><span class="em">🚀</span><div class="info"><div class="t">RR Skillverse</div><div class="d">Courses & Training</div></div></a>
+        <a class="cta-a" href="https://rr-finman-ai.vercel.app/" target="_blank"><span class="em">💰</span><div class="info"><div class="t">FinMan AI</div><div class="d">Finance Intelligence</div></div></a>
+        <a class="cta-a" href="#" target="_blank"><span class="em">🤖</span><div class="info"><div class="t">BUDDY AI</div><div class="d">Personal AI Agent</div></div></a>
+        <a class="cta-a" href="https://rrskillverse.in/blog" target="_blank"><span class="em">✍️</span><div class="info"><div class="t">Tech Blog</div><div class="d">Azure · AI · .NET</div></div></a>
       </div>
     </div>
 
@@ -408,305 +416,310 @@ body{
     <span>By <b>Raushan Ranjan · MCT</b></span>
     <div class="flinks">
       <a href="https://rrskillverse.in" target="_blank">rrskillverse.in</a>
-      <a href="#">FinMan AI</a>
-      <a href="#">SkillEdge</a>
+      <a href="https://rr-finman-ai.vercel.app/">FinMan AI</a>
+      <a href="https://rrskillverse.in/courses.html">SkillEdge</a>
     </div>
   </div>
 
 </div>
 
+<!-- MOBILE BOTTOM SHEET -->
+<div id="mobileSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-grid">
+    <a class="sheet-link" href="https://rrskillverse.in" target="_blank"><span class="sem">🚀</span><div class="si"><div class="st">Raushan's</div><div class="sd">Courses & Training</div></div></a>
+    <a class="sheet-link" href="#" target="_blank"><span class="sem">💰</span><div class="si"><div class="st">FinMan AI</div><div class="sd">Finance Intelligence</div></div></a>
+    <a class="sheet-link" href="#" target="_blank"><span class="sem">🤖</span><div class="si"><div class="st">BUDDY AI</div><div class="sd">Personal AI Agent</div></div></a>
+    <a class="sheet-link" href="https://rrskillverse.in/blog" target="_blank"><span class="sem">✍️</span><div class="si"><div class="st">Tech Blog</div><div class="sd">Azure · AI · .NET</div></div></a>
+  </div>
+  <div class="sheet-brand">by <b>Raushan Ranjan · MCT</b> · rrskillverse.in</div>
+</div>
+
+<!-- SHARE TOAST -->
+<div id="shareToast">✓ Score copied to clipboard!</div>
+
 <script>
-// ══════════ STARS ══════════
-(function(){
+// ── STARS ──
+(()=>{
   const c=document.getElementById('stars');
-  for(let i=0;i<60;i++){
-    const s=document.createElement('div');
-    s.className='star';
-    const sz=Math.random()<0.3?2:1;
-    const o1=(0.05+Math.random()*0.2).toFixed(2);
-    const o2=(parseFloat(o1)+0.1+Math.random()*0.3).toFixed(2);
+  for(let i=0;i<55;i++){
+    const s=document.createElement('div');s.className='star';
+    const sz=Math.random()<.25?2:1;
+    const o1=(.04+Math.random()*.18).toFixed(2);
+    const o2=(+o1+.1+Math.random()*.3).toFixed(2);
     s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--o1:${o1};--o2:${o2};--d:${2+Math.random()*5}s;animation-delay:${Math.random()*5}s`;
     c.appendChild(s);
   }
 })();
 
-// ══════════ GAME STATE ══════════
+// ── GAME VARS ──
 const gameEl  = document.getElementById('game');
 const ballEl  = document.getElementById('ball');
-const overlay = document.getElementById('overlay');
-const playBtn = document.getElementById('playBtn');
+const startOv = document.getElementById('startOv');
+const goOv    = document.getElementById('goOverlay');
 
-const BALL_W   = 20;
-const BALL_H   = 20;
-const WALL_H   = 20;
-const GAP_W    = 60;   // gap width in pixels
-const BASE_WALL_SPEED = 0.9;   // px per tick
-const BASE_FALL_SPEED = 1.4;
-const BASE_RISE_SPEED = 0.55;
-const TICK_MS  = 10;
-const WALL_INTERVAL_PX = 130; // vertical distance between walls
+const BALL_W = 20, BALL_H = 20, WALL_H = 20, GAP_W = 60;
+const BASE_WALL = 0.9, BASE_FALL = 1.4, WALL_GAP_PX = 130;
+const TICK = 10;
 
-let GW, GH; // game dimensions, set at start
-let score, best, running, loop;
-let ballX, ballY;   // ball top-left position
-let dir;            // -1 left, 0 none, 1 right
-let walls = [];     // [{topY, gapX}]
-let wallSpeed, fallSpeed, riseSpeed;
+let GW, GH, score, best, running, loop, dir;
+let ballX, ballY, walls=[];
+let wallSpeed, fallSpeed;
+let sheetOpen=false;
 
-// ══════════ INIT ══════════
-best = parseInt(localStorage.getItem('fb2_best')||'0');
-setUI(0);
+best = parseInt(localStorage.getItem('fb3_best')||'0');
+initBestUI();
 
-function getGameSize(){
-  const r = gameEl.getBoundingClientRect();
-  GW = r.width; GH = r.height;
+// ── UI ──
+function initBestUI(){
+  ['tbBest','pBest'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=best});
 }
-
 function setUI(s){
-  ['tbScore','pScore'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=s});
-  ['tbBest','pBest'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=best});
+  ['tbScore','pScore'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=s});
+  ['tbBest','pBest'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=best});
   if(document.getElementById('pLevel')){
     const lv=Math.floor(s/10)+1;
     document.getElementById('pLevel').textContent=lv;
     document.getElementById('lvFill').style.width=(s%10)*10+'%';
   }
 }
+function showRunningUI(v){
+  ['btnRestart','btnQuit'].forEach(id=>{
+    const e=document.getElementById(id);
+    if(e) v ? e.classList.remove('hidden') : e.classList.add('hidden');
+  });
+}
 
-// ══════════ START ══════════
+// ── SHEET ──
+function toggleSheet(){
+  sheetOpen=!sheetOpen;
+  document.getElementById('mobileSheet').classList.toggle('open',sheetOpen);
+}
+document.addEventListener('click',e=>{
+  const sheet=document.getElementById('mobileSheet');
+  const btnMore=document.getElementById('btnMore');
+  if(sheetOpen && !sheet.contains(e.target) && e.target!==btnMore){
+    sheetOpen=false; sheet.classList.remove('open');
+  }
+});
+
+// ── GAME SIZE ──
+function getSize(){
+  const r=gameEl.getBoundingClientRect();
+  GW=r.width; GH=r.height;
+}
+
+// ── START ──
 function startGame(){
-  getGameSize();
+  getSize();
   score=0; dir=0; walls=[];
   running=true;
-
-  wallSpeed  = BASE_WALL_SPEED;
-  fallSpeed  = BASE_FALL_SPEED;
-  riseSpeed  = BASE_RISE_SPEED;
-
-  // place ball near bottom-center
-  ballX = GW/2 - BALL_W/2;
-  ballY = GH - 80;
-  ballEl.style.left = ballX+'px';
-  ballEl.style.top  = ballY+'px';
-
-  // clear old walls
+  wallSpeed=BASE_WALL; fallSpeed=BASE_FALL;
+  ballX=GW/2-BALL_W/2; ballY=GH-80;
+  ballEl.style.left=ballX+'px'; ballEl.style.top=ballY+'px';
   gameEl.querySelectorAll('.wall').forEach(e=>e.remove());
-
-  // seed initial walls so screen isn't empty
-  for(let i=0;i<5;i++){
-    spawnWall(GH - 60 - i * WALL_INTERVAL_PX);
-  }
-
-  overlay.classList.add('hide');
-  clearInterval(loop);
-  loop = setInterval(tick, TICK_MS);
+  startOv.classList.add('hide');
+  goOv.classList.remove('show');
+  showRunningUI(true);
   setUI(0);
+  // seed walls
+  for(let i=0;i<5;i++) spawnWall(GH-60-i*WALL_GAP_PX);
+  clearInterval(loop);
+  loop=setInterval(tick,TICK);
 }
 
-// ══════════ SPAWN A WALL ══════════
+function showStart(){
+  running=false; clearInterval(loop); dir=0;
+  gameEl.querySelectorAll('.wall').forEach(e=>e.remove());
+  goOv.classList.remove('show');
+  startOv.classList.remove('hide');
+  showRunningUI(false);
+}
+
+function quitGame(){
+  running=false; clearInterval(loop); dir=0;
+  gameEl.querySelectorAll('.wall').forEach(e=>e.remove());
+  goOv.classList.remove('show');
+  startOv.classList.remove('hide');
+  showRunningUI(false);
+}
+
+// ── SPAWN WALL ──
 function spawnWall(topY){
-  const gapX = 10 + Math.random()*(GW - GAP_W - 20); // never flush to edge
-
-  const el = document.createElement('div');
-  el.className = 'wall';
-  el.style.top    = topY+'px';
-  el.style.left   = '0';
-  el.style.width  = GW+'px';
-  el.style.height = WALL_H+'px';
-
-  // left segment
-  if(gapX > 0){
-    const ls = document.createElement('div');
-    ls.className = 'wall-seg';
-    ls.style.left='0'; ls.style.width=gapX+'px';
-    el.appendChild(ls);
-  }
+  const gapX=10+Math.random()*(GW-GAP_W-20);
+  const el=document.createElement('div');
+  el.className='wall';
+  el.style.cssText=`top:${topY}px;left:0;width:${GW}px;height:${WALL_H}px`;
+  // left seg
+  if(gapX>0){const ls=document.createElement('div');ls.className='wall-seg';ls.style.cssText=`left:0;width:${gapX}px`;el.appendChild(ls);}
   // hole glow
-  const hg = document.createElement('div');
-  hg.className='wall-hole';
-  hg.style.left=gapX+'px'; hg.style.width=GAP_W+'px';
-  el.appendChild(hg);
-
-  // right segment
-  const rightStart = gapX+GAP_W;
-  if(rightStart < GW){
-    const rs=document.createElement('div');
-    rs.className='wall-seg';
-    rs.style.left=rightStart+'px'; rs.style.width=(GW-rightStart)+'px';
-    el.appendChild(rs);
-  }
-
+  const hg=document.createElement('div');hg.className='wall-hole';hg.style.cssText=`left:${gapX}px;width:${GAP_W}px`;el.appendChild(hg);
+  // right seg
+  const rs=document.createElement('div');rs.className='wall-seg';rs.style.cssText=`left:${gapX+GAP_W}px;width:${GW-gapX-GAP_W}px`;el.appendChild(rs);
   gameEl.appendChild(el);
-  walls.push({el, topY, gapX});
+  walls.push({el,topY,gapX});
 }
 
-// ══════════ MAIN TICK ══════════
+// ── TICK ──
 function tick(){
-  if(!running) return;
-  getGameSize();
+  if(!running)return;
+  getSize();
+  // horizontal move
+  const SPD=3.2;
+  if(dir===-1) ballX=Math.max(0,ballX-SPD);
+  if(dir=== 1) ballX=Math.min(GW-BALL_W,ballX+SPD);
 
-  // ── MOVE BALL HORIZONTALLY ──
-  const BSPEED = 3.2;
-  if(dir===-1) ballX = Math.max(0, ballX - BSPEED);
-  if(dir=== 1) ballX = Math.min(GW - BALL_W, ballX + BSPEED);
-
-  // ── MOVE WALLS UP ──
-  let toRemove=[];
+  // move walls up, remove off-screen
+  const toRm=[];
   walls.forEach((w,i)=>{
-    w.topY -= wallSpeed;
-    w.el.style.top = w.topY+'px';
-    // remove walls that scroll off top
-    if(w.topY < -WALL_H-5){
-      w.el.remove();
-      toRemove.push(i);
-      addScore();
-    }
+    w.topY-=wallSpeed;
+    w.el.style.top=w.topY+'px';
+    if(w.topY<-WALL_H-5){w.el.remove();toRm.push(i);addScore();}
   });
-  // prune removed walls (reverse so indices stay valid)
-  for(let i=toRemove.length-1;i>=0;i--) walls.splice(toRemove[i],1);
+  for(let i=toRm.length-1;i>=0;i--) walls.splice(toRm[i],1);
 
-  // ── SPAWN NEW WALLS ──
-  // always keep the last wall far enough from bottom
-  if(walls.length === 0 || walls[walls.length-1].topY < GH - WALL_INTERVAL_PX){
-    spawnWall(GH + 10);
-  }
+  // spawn new wall if needed
+  if(walls.length===0||walls[walls.length-1].topY<GH-WALL_GAP_PX) spawnWall(GH+10);
 
-  // ── COLLISION: is ball sitting on any wall? ──
-  const ballBottom = ballY + BALL_H;
-  const ballTop    = ballY;
-  const ballLeft   = ballX;
-  const ballRight  = ballX + BALL_W;
-
-  let blocked = false;
-
+  // collision
+  const bB=ballY+BALL_H, bT=ballY, bL=ballX, bR=ballX+BALL_W;
+  let blocked=false;
   for(const w of walls){
-    const wTop    = w.topY;
-    const wBottom = w.topY + WALL_H;
-    const gapL    = w.gapX;
-    const gapR    = w.gapX + GAP_W;
-
-    // Ball overlaps this wall vertically?
-    if(ballBottom > wTop && ballTop < wBottom){
-      // Is any part of ball over the SOLID part (not the gap)?
-      // Solid = [0, gapL) and (gapR, GW]
-      const overLeftSolid  = ballLeft  < gapL;
-      const overRightSolid = ballRight > gapR;
-
-      if(overLeftSolid || overRightSolid){
-        blocked = true;
-        // Push ball just above the wall (snap to wall top)
-        ballY = wTop - BALL_H;
-        break; // one collision is enough
+    if(bB>w.topY && bT<w.topY+WALL_H){
+      const gL=w.gapX, gR=w.gapX+GAP_W;
+      if(bL<gL||bR>gR){
+        // hit solid — clamp to wall top
+        blocked=true;
+        ballY=w.topY-BALL_H;
+        break;
       }
     }
   }
 
-  // ── GRAVITY ──
   if(!blocked){
-    // fall freely
-    ballY += fallSpeed;
-    // clamp bottom
-    if(ballY > GH - BALL_H) ballY = GH - BALL_H;
+    ballY=Math.min(GH-BALL_H, ballY+fallSpeed);
   } else {
-    // ball is resting on wall — rise with it
-    // (already snapped above, nothing extra needed)
-    // check if ball reached top → game over
-    if(ballY <= 2){
-      die(); return;
-    }
+    if(ballY<=1){die();return;}
   }
+  if(ballY<0){ballY=0;die();return;}
 
-  // ── FINAL TOP CHECK ──
-  if(ballY < 0){
-    ballY = 0;
-    die(); return;
-  }
-
-  ballEl.style.left = ballX+'px';
-  ballEl.style.top  = ballY+'px';
+  ballEl.style.left=ballX+'px';
+  ballEl.style.top=ballY+'px';
 }
 
-// ══════════ SCORE ══════════
+// ── SCORE ──
 function addScore(){
   score++;
+  if(score>best){best=score;localStorage.setItem('fb3_best',best);}
   setUI(score);
-
-  // speed up every 10 points
+  // speed scale
   if(score%10===0){
-    wallSpeed  = Math.min(BASE_WALL_SPEED  + score*0.04, 3.5);
-    fallSpeed  = Math.min(BASE_FALL_SPEED  + score*0.015, 3.5);
-    riseSpeed  = BASE_RISE_SPEED;
+    wallSpeed=Math.min(BASE_WALL+score*.04,3.5);
+    fallSpeed=Math.min(BASE_FALL+score*.015,3.5);
   }
-
-  // floating score pop
-  const pop=document.createElement('div');
-  pop.className='score-pop';
-  pop.textContent='+1';
-  pop.style.left=(ballX+BALL_W)+'px';
-  pop.style.top=ballY+'px';
-  gameEl.appendChild(pop);
-  setTimeout(()=>pop.remove(),700);
+  // floating +1
+  const p=document.createElement('div');
+  p.className='score-pop';p.textContent='+1';
+  p.style.cssText=`left:${ballX+BALL_W}px;top:${ballY}px`;
+  gameEl.appendChild(p);setTimeout(()=>p.remove(),700);
 }
 
-// ══════════ GAME OVER ══════════
+// ── GAME OVER ──
 function die(){
-  running=false;
-  clearInterval(loop);
-  dir=0;
-
-  // particles
-  for(let i=0;i<16;i++){
-    const p=document.createElement('div');
-    p.className='pt';
-    const ang=Math.random()*Math.PI*2;
-    const dist=25+Math.random()*35;
-    p.style.cssText=`left:${ballX+BALL_W/2}px;top:${ballY+BALL_H/2}px;background:${['#ec4899','#818cf8','#fbbf24','#fff'][Math.floor(Math.random()*4)]};--dx:${(Math.cos(ang)*dist).toFixed(1)}px;--dy:${(Math.sin(ang)*dist).toFixed(1)}px;animation-duration:${0.5+Math.random()*0.4}s`;
-    gameEl.appendChild(p);
-    setTimeout(()=>p.remove(),900);
-  }
+  running=false;clearInterval(loop);dir=0;
   gameEl.classList.add('danger');
   setTimeout(()=>gameEl.classList.remove('danger'),400);
-
-  // update best
-  const isNew = score > best;
-  if(isNew){ best=score; localStorage.setItem('fb2_best',best); }
-
-  setTimeout(()=>{
-    overlay.classList.remove('hide');
-    document.getElementById('ovTitle').textContent = score>0 ? 'Game\nOver' : 'Falling\nBall';
-    const ovBig=document.getElementById('ovBig');
-    const ovLbl=document.getElementById('ovLbl');
-    const ovNB=document.getElementById('ovNB');
-    const ovHint=document.getElementById('ovHint');
-    const ovDesc=document.getElementById('ovDesc');
-
-    if(score>0){
-      ovBig.style.display='block'; ovBig.textContent=score;
-      ovLbl.style.display='block';
-      ovDesc.textContent='Great run! Can you beat your record?';
-      ovHint.style.display='none';
-    } else {
-      ovBig.style.display='none';
-      ovLbl.style.display='none';
-      ovDesc.textContent='Guide the ball through the gaps.\nDon\'t let it reach the top!';
-      ovHint.style.display='block';
-    }
-    ovNB.style.display = isNew && score>0 ? 'block':'none';
-    playBtn.textContent = score>0 ? '↺  PLAY AGAIN' : '▶  PLAY';
-    setUI(score);
-  }, 500);
+  // particles
+  for(let i=0;i<18;i++){
+    const pt=document.createElement('div');pt.className='pt';
+    const ang=Math.random()*Math.PI*2,dist=25+Math.random()*40;
+    const col=['#ec4899','#818cf8','#fbbf24','#fff'][~~(Math.random()*4)];
+    pt.style.cssText=`left:${ballX+BALL_W/2}px;top:${ballY+BALL_H/2}px;width:5px;height:5px;background:${col};--dx:${(Math.cos(ang)*dist).toFixed(1)}px;--dy:${(Math.sin(ang)*dist).toFixed(1)}px;animation-duration:${.5+Math.random()*.4}s`;
+    gameEl.appendChild(pt);setTimeout(()=>pt.remove(),900);
+  }
+  showRunningUI(false);
+  setTimeout(()=>showGameOver(),550);
 }
 
-// ══════════ INPUT ══════════
+function showGameOver(){
+  const isNew = score >= best && score > 0;
+
+  // animate score ring
+  document.getElementById('goScoreNum').textContent=score;
+  const ring=document.getElementById('ringFill');
+  const circ=2*Math.PI*54; // ~339
+  ring.style.strokeDashoffset=circ;
+  goOv.classList.add('show');
+
+  // delayed ring fill
+  setTimeout(()=>{
+    const pct=Math.min(score/50,1); // full ring at 50 pts
+    ring.style.strokeDashoffset=circ*(1-pct);
+  },200);
+
+  // title & messages
+  const msgs=[
+    [0,4,'Keep trying!','Every expert was once a beginner.'],
+    [5,9,'Not bad!','You\'re getting the hang of it!'],
+    [10,19,'Nice run! 🔥','Double digits — keep climbing!'],
+    [20,29,'Impressive! ⚡','You\'re a natural at this!'],
+    [30,49,'Outstanding! 🌟','Incredible reflexes!'],
+    [50,999,'Legendary! 👑','You\'ve mastered the ball!'],
+  ];
+  const [,,,ttl,msg]=msgs.find(([lo,hi])=>score>=lo&&score<=hi)||msgs[0];
+  document.getElementById('goTitle').textContent=ttl||'Game Over';
+  document.getElementById('goMsg').textContent=msg||'';
+  const nb=document.getElementById('goNewBest');
+  nb.style.display=isNew?'block':'none';
+
+  // confetti for new best
+  if(isNew && score>0) burstConfetti();
+}
+
+// ── CONFETTI ──
+function burstConfetti(){
+  const cols=['#818cf8','#ec4899','#fbbf24','#34d399','#c084fc','#fff'];
+  for(let i=0;i<50;i++){
+    setTimeout(()=>{
+      const p=document.createElement('div');
+      p.style.cssText=`position:fixed;top:-10px;left:${Math.random()*100}vw;width:${5+Math.random()*7}px;height:${5+Math.random()*7}px;background:${cols[~~(Math.random()*cols.length)]};border-radius:${Math.random()>.5?'50%':'2px'};pointer-events:none;z-index:500;animation:ptf ${1.5+Math.random()*2}s ease-out forwards;--dx:${(Math.random()*60-30).toFixed(0)}px;--dy:${(100+Math.random()*200).toFixed(0)}px`;
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(),4000);
+    },i*40);
+  }
+}
+
+// ── SHARE ──
+function shareScore(){
+  const msgs=[
+    `🎮 I scored ${score} on Falling Ball!\nCan you beat me?\nPlay at: rrskillverse.in\n#RRSkillverse #FallingBall`,
+  ];
+  const text=msgs[0];
+  if(navigator.share){
+    navigator.share({title:'Falling Ball · Raushan's',text,url:'https://rrskillverse.in'}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(text).then(()=>{
+      const t=document.getElementById('shareToast');
+      t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'),2500);
+    }).catch(()=>{
+      // fallback: open WhatsApp
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,'_blank');
+    });
+  }
+}
+
+// ── CONTROLS ──
 document.addEventListener('keydown',e=>{
-  if(e.key==='ArrowLeft') { dir=-1; e.preventDefault(); }
-  if(e.key==='ArrowRight'){ dir= 1; e.preventDefault(); }
+  if(e.key==='ArrowLeft'){dir=-1;e.preventDefault();}
+  if(e.key==='ArrowRight'){dir=1;e.preventDefault();}
 });
 document.addEventListener('keyup',e=>{
-  if(e.key==='ArrowLeft'||e.key==='ArrowRight') dir=0;
+  if(e.key==='ArrowLeft'||e.key==='ArrowRight')dir=0;
 });
-
-function holdBtn(id, d){
+function holdBtn(id,d){
   const b=document.getElementById(id);
+  if(!b)return;
   const dn=e=>{e.preventDefault();dir=d;b.classList.add('on')};
   const up=e=>{e.preventDefault();dir=0;b.classList.remove('on')};
   b.addEventListener('touchstart',dn,{passive:false});
@@ -716,23 +729,16 @@ function holdBtn(id, d){
   b.addEventListener('mouseup',up);
   b.addEventListener('mouseleave',up);
 }
-holdBtn('btnL',-1);
-holdBtn('btnR', 1);
-
-// swipe on game area
-let swipeX=null;
-gameEl.addEventListener('touchstart',e=>{swipeX=e.touches[0].clientX},{passive:true});
+holdBtn('btnL',-1);holdBtn('btnR',1);
+// swipe
+let swX=null;
+gameEl.addEventListener('touchstart',e=>{swX=e.touches[0].clientX},{passive:true});
 gameEl.addEventListener('touchmove',e=>{
-  if(swipeX===null)return;
-  const dx=e.touches[0].clientX-swipeX;
-  dir = dx < -6 ? -1 : dx > 6 ? 1 : 0;
+  if(swX===null)return;
+  const dx=e.touches[0].clientX-swX;
+  dir=dx<-6?-1:dx>6?1:0;
 },{passive:true});
-gameEl.addEventListener('touchend',()=>{dir=0;swipeX=null},{passive:true});
-
-playBtn.addEventListener('click', startGame);
-
-// init best display
-['tbBest','pBest'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=best});
+gameEl.addEventListener('touchend',()=>{dir=0;swX=null},{passive:true});
 </script>
 </body>
 </html>
