@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>Falling Ball · RR Skillverse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0a0e1a;
+  --surface:#111827;
+  --card:#1a2235;
+  --border:#253047;
+  --accent:#00d4ff;
+  --accent2:#ff3d6e;
+  --ball:#ff3d6e;
+  --block:#1e3a5f;
+  --hole:#00d4ff;
+  --text:#e8f4ff;
+  --muted:#5a7a9a;
+  --green:#00e676;
+  --r:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;user-select:none}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Space Grotesk',sans-serif;
+  display:flex;flex-direction:column;
+  height:100vh;overflow:hidden;
+}
+
+/* ── SCANLINE OVERLAY ── */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:1000;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);
+}
+
+/* ── NAV ── */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;
+  border-bottom:1px solid var(--border);
+  background:rgba(10,14,26,.95);
+  backdrop-filter:blur(8px);
+  flex-shrink:0;
+  z-index:100;
+}
+.nav-left{display:flex;align-items:center;gap:8px}
+.nav-logo{
+  font-family:'Orbitron',monospace;font-size:13px;font-weight:900;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:.04em;
+}
+.nav-game{font-size:11px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.nav-score-wrap{display:flex;align-items:center;gap:12px}
+.nav-score{
+  font-family:'Orbitron',monospace;font-size:14px;font-weight:700;
+  color:var(--accent);
+  background:rgba(0,212,255,.08);
+  border:1px solid rgba(0,212,255,.2);
+  padding:4px 12px;border-radius:6px;
+  min-width:60px;text-align:center;
+}
+.nav-best{font-size:11px;color:var(--muted);text-align:right;line-height:1.3}
+.nav-best span{color:var(--accent);font-weight:700}
+
+/* ── MAIN LAYOUT ── */
+.layout{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  gap:16px;padding:12px;min-height:0;
+  overflow:hidden;
+}
+
+/* ── GAME CONTAINER ── */
+.game-wrap{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+}
+#game{
+  width:340px;height:480px;
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  background:linear-gradient(180deg,#0d1420 0%,#0a1018 100%);
+  overflow:hidden;
+  position:relative;
+  box-shadow:0 0 0 1px rgba(0,212,255,.05),0 20px 60px rgba(0,0,0,.5),inset 0 0 40px rgba(0,212,255,.02);
+}
+/* grid lines */
+#game::before{
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(0,212,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.025) 1px,transparent 1px);
+  background-size:34px 48px;
+  pointer-events:none;z-index:0;
+}
+
+/* ── CHARACTER (BALL) ── */
+#character{
+  width:22px;height:22px;
+  background:radial-gradient(circle at 35% 35%,#ff8fa8,var(--ball));
+  border-radius:50%;
+  position:absolute;
+  top:420px;left:159px;
+  z-index:50;
+  box-shadow:0 0 12px rgba(255,61,110,.6),0 0 24px rgba(255,61,110,.3);
+  transition:box-shadow .1s;
+}
+
+/* ── BLOCKS ── */
+.block{
+  width:340px;height:18px;
+  background:linear-gradient(90deg,#0d2d50,#1e3a5f,#0d2d50);
+  border-top:1px solid rgba(0,212,255,.15);
+  border-bottom:1px solid rgba(0,212,255,.08);
+  position:absolute;
+  box-shadow:0 2px 8px rgba(0,0,0,.4);
+}
+.hole{
+  width:44px;height:18px;
+  background:linear-gradient(180deg,rgba(0,212,255,.15),rgba(0,212,255,.04));
+  border:1px solid rgba(0,212,255,.3);
+  border-radius:2px;
+  position:absolute;
+  box-shadow:0 0 8px rgba(0,212,255,.2),inset 0 0 6px rgba(0,212,255,.1);
+}
+
+/* ── OVERLAY (start/gameover) ── */
+#overlay{
+  position:absolute;inset:0;z-index:200;
+  background:rgba(10,14,26,.92);
+  backdrop-filter:blur(4px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;
+  border-radius:var(--r);
+}
+#overlay.hidden{display:none}
+.ov-title{
+  font-family:'Orbitron',monospace;
+  font-size:clamp(18px,5vw,26px);font-weight:900;
+  text-align:center;line-height:1.2;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.ov-score{
+  font-family:'Orbitron',monospace;font-size:32px;font-weight:900;
+  color:var(--accent);
+  text-shadow:0 0 20px rgba(0,212,255,.4);
+}
+.ov-sub{font-size:13px;color:var(--muted);text-align:center;max-width:240px;line-height:1.5}
+.ov-best{font-size:12px;color:var(--green);font-weight:700;display:none}
+.btn-play{
+  background:linear-gradient(135deg,var(--accent),#0099cc);
+  border:none;color:#000;
+  font-family:'Orbitron',monospace;font-size:13px;font-weight:900;
+  padding:12px 32px;border-radius:8px;cursor:pointer;
+  letter-spacing:.06em;transition:opacity .2s,transform .15s;
+  box-shadow:0 4px 20px rgba(0,212,255,.3);
+}
+.btn-play:hover{opacity:.88;transform:translateY(-1px)}
+.ov-how{
+  font-size:11px;color:var(--muted);text-align:center;
+  max-width:260px;line-height:1.6;
+  border:1px solid var(--border);border-radius:8px;
+  padding:8px 12px;
+}
+.ov-how b{color:var(--accent)}
+
+/* ── SIDE PANEL ── */
+.side-panel{
+  display:flex;flex-direction:column;gap:10px;
+  width:150px;flex-shrink:0;
+}
+.panel-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:12px;
+}
+.pc-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.pc-val{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:var(--accent)}
+.pc-val.green{color:var(--green)}
+
+.level-bar{height:6px;background:var(--border);border-radius:3px;margin-top:6px;overflow:hidden}
+.level-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s}
+
+.pc-how{font-size:11px;color:var(--muted);line-height:1.6}
+.pc-how b{color:var(--text)}
+
+/* CTA links */
+.cta-stack{display:flex;flex-direction:column;gap:6px}
+.cta-link{
+  display:flex;align-items:center;gap:8px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:8px 10px;
+  text-decoration:none;color:var(--text);
+  font-size:11px;font-weight:700;
+  transition:all .18s;cursor:pointer;
+}
+.cta-link:hover{border-color:var(--accent);color:var(--accent);transform:translateX(2px)}
+.cta-link .ci{font-size:14px;flex-shrink:0}
+.cta-link .cn{line-height:1.2}
+.cta-link .cd{font-size:9px;color:var(--muted);font-weight:400}
+
+/* ── MOBILE CONTROLS ── */
+.mobile-controls{
+  display:none;
+  gap:12px;
+  padding:8px 0 2px;
+  width:340px;
+  justify-content:space-between;
+  flex-shrink:0;
+}
+.ctrl-btn{
+  flex:1;height:52px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;cursor:pointer;
+  transition:background .1s,border-color .1s,transform .1s;
+  -webkit-user-select:none;user-select:none;
+  touch-action:none;
+}
+.ctrl-btn:active,.ctrl-btn.pressed{
+  background:rgba(0,212,255,.12);
+  border-color:var(--accent);
+  transform:scale(.96);
+}
+
+/* ── FOOTER ── */
+footer{
+  flex-shrink:0;
+  padding:6px 16px;
+  border-top:1px solid var(--border);
+  background:rgba(10,14,26,.95);
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:10px;color:var(--muted);
+  z-index:100;
+}
+footer b{color:var(--accent)}
+.footer-links{display:flex;gap:12px}
+.footer-links a{color:var(--muted);text-decoration:none;font-size:10px;transition:color .2s}
+.footer-links a:hover{color:var(--accent)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:580px){
+  .side-panel{display:none}
+  .layout{padding:8px 8px 0;gap:0;flex-direction:column;justify-content:flex-start;align-items:center}
+  #game{width:calc(100vw - 16px);max-width:400px;height:calc(100vh - 190px);min-height:280px}
+  .block{width:100%}
+  .mobile-controls{display:flex;width:calc(100vw - 16px);max-width:400px}
+  .nav-best{display:none}
+  .game-wrap{gap:6px;width:100%}
+  .block{width:400px}
+}
+@media(min-width:581px){
+  .mobile-controls{display:none!important}
+}
+
+/* ── PARTICLES ── */
+.particle{
+  position:absolute;width:4px;height:4px;border-radius:50%;
+  pointer-events:none;z-index:60;
+  animation:pfade .6s ease forwards;
+}
+@keyframes pfade{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--px),var(--py)) scale(0);opacity:0}}
+
+/* pulse on score */
+@keyframes scorepop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+.pop{animation:scorepop .25s ease}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <div>
+      <div class="nav-logo">RR Skillverse</div>
+      <div class="nav-game">Falling Ball</div>
+    </div>
+  </div>
+  <div class="nav-score-wrap">
+    <div class="nav-score" id="navScore">0</div>
+    <div class="nav-best">Best<br><span id="navBest">0</span></div>
+  </div>
+</nav>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- GAME AREA -->
+  <div class="game-wrap">
+    <div id="game">
+      <div id="character"></div>
+
+      <!-- OVERLAY -->
+      <div id="overlay">
+        <div class="ov-title" id="ovTitle">Falling Ball</div>
+        <div class="ov-score" id="ovScore" style="display:none"></div>
+        <div class="ov-best" id="ovBest">🏆 New Best!</div>
+        <div class="ov-sub" id="ovSub">Guide the ball through the gaps. Don't let it reach the top!</div>
+        <button class="btn-play" id="playBtn">▶ START</button>
+        <div class="ov-how" id="ovHow">
+          <b>Desktop:</b> ← → Arrow keys<br>
+          <b>Mobile:</b> Tap the buttons below
+        </div>
+      </div>
+    </div>
+
+    <!-- MOBILE CONTROLS -->
+    <div class="mobile-controls">
+      <div class="ctrl-btn" id="btnLeft">◀</div>
+      <div class="ctrl-btn" id="btnRight">▶</div>
+    </div>
+  </div>
+
+  <!-- SIDE PANEL -->
+  <div class="side-panel">
+    <div class="panel-card">
+      <div class="pc-label">Score</div>
+      <div class="pc-val" id="sideScore">0</div>
+    </div>
+    <div class="panel-card">
+      <div class="pc-label">Best</div>
+      <div class="pc-val green" id="sideBest">0</div>
+    </div>
+    <div class="panel-card">
+      <div class="pc-label">Level</div>
+      <div class="pc-val" id="sideLevel">1</div>
+      <div class="level-bar"><div class="level-fill" id="levelFill" style="width:10%"></div></div>
+    </div>
+    <div class="panel-card">
+      <div class="pc-label">How to Play</div>
+      <div class="pc-how">
+        <b>← →</b> Move ball<br>
+        Pass through the <b style="color:var(--accent)">blue gaps</b><br>
+        Don't hit the top!<br>
+        Speed increases every 10 pts
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;padding-left:2px">More from Raushan</div>
+    <div class="cta-stack">
+      <a class="cta-link" href="https://rrskillverse.in" target="_blank">
+        <span class="ci">🚀</span>
+        <div class="cn">RR Skillverse<div class="cd">Courses & Training</div></div>
+      </a>
+      <a class="cta-link" href="#" target="_blank">
+        <span class="ci">💰</span>
+        <div class="cn">FinMan AI<div class="cd">Finance Intelligence</div></div>
+      </a>
+      <a class="cta-link" href="#" target="_blank">
+        <span class="ci">🤖</span>
+        <div class="cn">BUDDY AI<div class="cd">Personal AI Agent</div></div>
+      </a>
+      <a class="cta-link" href="https://rrskillverse.in/blog" target="_blank">
+        <span class="ci">✍️</span>
+        <div class="cn">Tech Blog<div class="cd">Azure · AI · .NET</div></div>
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div>Built by <b>Raushan Ranjan · MCT</b></div>
+  <div class="footer-links">
+    <a href="https://rrskillverse.in" target="_blank">rrskillverse.in</a>
+    <a href="#">FinMan AI</a>
+    <a href="#">SkillEdge</a>
+  </div>
+</footer>
+
+<script>
+// ══════════════════════════════════════
+// GAME ENGINE
+// ══════════════════════════════════════
+const character = document.getElementById('character');
+const gameEl    = document.getElementById('game');
+const overlay   = document.getElementById('overlay');
+const playBtn   = document.getElementById('playBtn');
+
+let gameLoop, blockLoop;
+let score = 0, bestScore = parseInt(localStorage.getItem('fb_best')||'0');
+let counter = 0, currentBlocks = [];
+let charLeft = 150, charTop = 420;
+let moveDir = 0; // -1 left, 0 none, 1 right
+let gameRunning = false;
+let blockSpeed = 0.6, ballFallSpeed = 1.8, ballRiseSpeed = 0.4;
+let gameW = 340, gameH = 480;
+let holeW = 44;
+
+// ── UI helpers ──
+function updateScore(s){
+  score = s;
+  document.getElementById('navScore').textContent = s;
+  document.getElementById('sideScore').textContent = s;
+  // level
+  const lvl = Math.floor(s/10)+1;
+  document.getElementById('sideLevel').textContent = lvl;
+  document.getElementById('levelFill').style.width = Math.min((s%10)*10,100)+'%';
+  // speed scaling
+  blockSpeed   = 0.5 + lvl * 0.12;
+  ballFallSpeed = 1.6 + lvl * 0.08;
+}
+function updateBest(){
+  if(score > bestScore){
+    bestScore = score;
+    localStorage.setItem('fb_best', bestScore);
+  }
+  document.getElementById('navBest').textContent = bestScore;
+  document.getElementById('sideBest').textContent = bestScore;
+}
+
+// ── RESIZE: adapt gameW to actual rendered width ──
+function recalcSize(){
+  const rect = gameEl.getBoundingClientRect();
+  gameW = rect.width;
+  gameH = rect.height;
+  // clamp char
+  charLeft = Math.min(Math.max(charLeft, 0), gameW - 22);
+  charTop  = Math.min(Math.max(charTop, 0), gameH - 22);
+}
+
+// ── START ──
+function startGame(){
+  recalcSize();
+  score = 0; counter = 0; currentBlocks = [];
+  charLeft = (gameW/2) - 11;
+  charTop  = gameH - 60;
+  character.style.left = charLeft + 'px';
+  character.style.top  = charTop  + 'px';
+  // clear old blocks
+  gameEl.querySelectorAll('.block,.hole').forEach(e=>e.remove());
+  overlay.classList.add('hidden');
+  gameRunning = true;
+  updateScore(0);
+  updateBest();
+  blockSpeed = 0.6; ballFallSpeed = 1.8;
+  // spawn first blocks
+  spawnBlock(gameH - 100);
+  spawnBlock(gameH);
+  spawnBlock(gameH + 100);
+  gameLoop = setInterval(tick, 8);
+}
+
+// ── SPAWN BLOCK ──
+function spawnBlock(topPos){
+  const block = document.createElement('div');
+  const hole  = document.createElement('div');
+  block.className = 'block';
+  hole.className  = 'hole';
+  block.id = 'block'+counter;
+  hole.id  = 'hole'+counter;
+  block.style.top = topPos + 'px';
+  hole.style.top  = topPos + 'px';
+  block.style.width = gameW+'px';
+  hole.style.width  = Math.max(holeW - Math.floor(score/15)*2, 28)+'px'; // shrinks with score
+  const maxLeft = gameW - parseInt(hole.style.width);
+  const randLeft = Math.floor(Math.random() * maxLeft);
+  hole.style.left = randLeft + 'px';
+  gameEl.appendChild(block);
+  gameEl.appendChild(hole);
+  currentBlocks.push(counter);
+  counter++;
+}
+
+// ── MAIN TICK ──
+function tick(){
+  if(!gameRunning)return;
+  recalcSize();
+
+  // move character
+  const speed = 3.5;
+  if(moveDir === -1) charLeft = Math.max(0, charLeft - speed);
+  if(moveDir ===  1) charLeft = Math.min(gameW - 22, charLeft + speed);
+  character.style.left = charLeft + 'px';
+
+  // check top boundary → game over
+  if(charTop <= 0){
+    endGame(); return;
+  }
+
+  let onBlock = false;
+
+  // move blocks and check collision
+  currentBlocks.forEach((id, idx) => {
+    const bl = document.getElementById('block'+id);
+    const hl = document.getElementById('hole'+id);
+    if(!bl || !hl) return;
+
+    let bt = parseFloat(bl.style.top);
+    bt -= blockSpeed;
+    bl.style.top = bt + 'px';
+    hl.style.top = bt + 'px';
+
+    // remove off-screen
+    if(bt < -20){
+      bl.remove(); hl.remove();
+      currentBlocks.splice(idx,1);
+      updateScore(score + 1);
+      updateBest();
+      return;
+    }
+
+    // spawn new block when last one is halfway up
+    if(idx === currentBlocks.length-1 && bt < gameH - 120){
+      spawnBlock(gameH + 20);
+    }
+
+    // collision detection
+    const ballBottom = charTop + 22;
+    const ballTop    = charTop;
+    const ballL      = charLeft;
+    const ballR      = charLeft + 22;
+
+    if(bt < ballBottom + 2 && bt + 18 > ballTop){
+      // ball is at block level — check if in hole
+      const hL = parseFloat(hl.style.left);
+      const hR = hL + parseFloat(hl.style.width||'44');
+      const inHole = ballR > hL && ballL < hR;
+      if(!inHole) onBlock = true;
+    }
+  });
+
+  // gravity / rise
+  if(onBlock){
+    charTop = Math.max(0, charTop - ballRiseSpeed);
+  } else {
+    charTop = Math.min(gameH - 22, charTop + ballFallSpeed);
+  }
+  character.style.top = charTop + 'px';
+}
+
+// ── END GAME ──
+function endGame(){
+  gameRunning = false;
+  clearInterval(gameLoop);
+  moveDir = 0;
+  updateBest();
+  // particles
+  burst(charLeft + 11, charTop + 11);
+  setTimeout(()=>{
+    overlay.classList.remove('hidden');
+    document.getElementById('ovTitle').textContent = score > 0 ? 'Game Over' : 'Falling Ball';
+    const ovScore = document.getElementById('ovScore');
+    const ovBest  = document.getElementById('ovBest');
+    ovScore.style.display = score > 0 ? 'block' : 'none';
+    ovScore.textContent = score;
+    ovBest.style.display = (score === bestScore && score > 0) ? 'block':'none';
+    document.getElementById('ovSub').textContent = score > 0
+      ? 'You scored '+score+' point'+(score===1?'':'s')+'! Keep going.'
+      : 'Guide the ball through the gaps. Don\'t let it reach the top!';
+    playBtn.textContent = score > 0 ? '↺ PLAY AGAIN' : '▶ START';
+    document.getElementById('ovHow').style.display = score > 0 ? 'none' : 'block';
+  }, 400);
+}
+
+// ── BURST PARTICLES ──
+function burst(x, y){
+  const cols=['#ff3d6e','#00d4ff','#ffffff','#ffca28'];
+  for(let i=0;i<12;i++){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const ang = (i/12)*Math.PI*2;
+    const dist = 20 + Math.random()*30;
+    p.style.setProperty('--px', (Math.cos(ang)*dist)+'px');
+    p.style.setProperty('--py', (Math.sin(ang)*dist)+'px');
+    p.style.background = cols[Math.floor(Math.random()*cols.length)];
+    p.style.left = x+'px'; p.style.top = y+'px';
+    gameEl.appendChild(p);
+    setTimeout(()=>p.remove(), 700);
+  }
+}
+
+// ══════════════════════════════════════
+// CONTROLS
+// ══════════════════════════════════════
+
+// ── KEYBOARD ──
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft')  moveDir=-1;
+  if(e.key==='ArrowRight') moveDir= 1;
+  e.preventDefault && e.preventDefault();
+});
+document.addEventListener('keyup', e=>{
+  if(e.key==='ArrowLeft'||e.key==='ArrowRight') moveDir=0;
+});
+
+// ── MOBILE TOUCH BUTTONS ──
+function setupBtn(id, dir){
+  const btn = document.getElementById(id);
+  const press   = e=>{ e.preventDefault(); moveDir=dir; btn.classList.add('pressed'); };
+  const release = e=>{ e.preventDefault(); moveDir=0;   btn.classList.remove('pressed'); };
+  btn.addEventListener('touchstart', press,   {passive:false});
+  btn.addEventListener('touchend',   release, {passive:false});
+  btn.addEventListener('touchcancel',release, {passive:false});
+  // mouse fallback
+  btn.addEventListener('mousedown',  press);
+  btn.addEventListener('mouseup',    release);
+  btn.addEventListener('mouseleave', release);
+}
+setupBtn('btnLeft', -1);
+setupBtn('btnRight', 1);
+
+// ── SWIPE / TILT (bonus mobile UX) ──
+let touchStartX = null;
+gameEl.addEventListener('touchstart', e=>{
+  touchStartX = e.touches[0].clientX;
+},{passive:true});
+gameEl.addEventListener('touchmove', e=>{
+  if(touchStartX === null) return;
+  const dx = e.touches[0].clientX - touchStartX;
+  if(dx < -8) moveDir=-1;
+  else if(dx > 8) moveDir= 1;
+  else moveDir = 0;
+},{passive:true});
+gameEl.addEventListener('touchend', ()=>{ moveDir=0; touchStartX=null; },{passive:true});
+
+// ── PLAY BUTTON ──
+playBtn.addEventListener('click', startGame);
+
+// ── INIT BEST ──
+document.getElementById('navBest').textContent = bestScore;
+document.getElementById('sideBest').textContent = bestScore;
+</script>
+</body>
+</html>
