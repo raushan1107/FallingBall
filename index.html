@@ -696,7 +696,7 @@ function shareScore(){
   ];
   const text=msgs[0];
   if(navigator.share){
-    navigator.share({title:'Falling Ball · Raushan's',text,url:'https://rrskillverse.in'}).catch(()=>{});
+    navigator.share({title:'Falling Ball · Raushan',text,url:'https://rrskillverse.in'}).catch(()=>{});
   } else {
     navigator.clipboard.writeText(text).then(()=>{
       const t=document.getElementById('shareToast');
