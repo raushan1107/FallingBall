@@ -963,13 +963,13 @@ body{
   window.shareScore = function() {
     var text = "\uD83C\uDFAE I scored " + score + " on Falling Ball!\n" +
                "Can you beat me?\n" +
-               "Play at: rrskillverse.in\n" +
+               "Play at: rrskillverse.in\\workshop\\#games\n" +
                "#RaushanRanjan #FallingBall #RRSkillverse";
     if (navigator.share) {
       navigator.share({
         title: "Falling Ball - Raushan Ranjan",
         text: text,
-        url: "https://rrskillverse.in"
+        url: "https://rrskillverse.in/workshop#games"
       }).catch(function() {});
     } else {
       navigator.clipboard.writeText(text).then(function() {
